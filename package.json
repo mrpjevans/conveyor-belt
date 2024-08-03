@@ -1,0 +1,24 @@
+{
+  "name": "conveyor-belt",
+  "version": "1.0.0",
+  "description": "Technical challenge for the Raspberry Pi Foundation",
+  "main": "src/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mrpjevans/conveyor-belt.git"
+  },
+  "author": "PJ Evans <pj@mrpjevans.com>",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/mrpjevans/conveyor-belt/issues"
+  },
+  "homepage": "https://github.com/mrpjevans/conveyor-belt#readme",
+  "devDependencies": {
+    "@eslint/js": "^9.8.0",
+    "eslint": "^9.8.0",
+    "globals": "^15.9.0"
+  }
+}
