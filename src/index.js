@@ -3,28 +3,33 @@ const { config } = require("./config");
 const conveyorBelt = new Array(config.conveyorBeltLength).fill(" ");
 const parts = [...config.parts, " "];
 let productCount = 0;
-
-const createWorker = () => ({
-  hands: [],
-  buildCounter: 0,
-});
+const unusedParts = config.parts.reduce((acc, part) => {
+  acc[part] = 0;
+  return acc;
+}, {});
 
 // Assign the workers
-const workerGroups = new Array();
-for (let index = 0; index < config.conveyorBeltLength; index++) {
-  workerGroups.push([createWorker(), createWorker()]);
-}
+const workerGroups = Array.from({ length: config.conveyorBeltLength }, () =>
+  new Array(config.workersPerGroup).fill().map(() => ({
+    hands: [],
+    buildCounter: 0,
+  }))
+);
 
-for (let index = 0; index < config.iterations; index++) {
+for (let iteration = 0; iteration < config.iterations; iteration++) {
   // Choose the next part pseudorandomly
-  const nextPart = parts[Math.floor(Math.random() * 3)];
+  const nextPart = parts[Math.floor(Math.random() * parts.length)];
 
   // Move the conveyor belt along one place (FIFO)
-  conveyorBelt.pop();
+  const endofLine = conveyorBelt.pop();
+  if (config.parts.includes(endofLine)) {
+    unusedParts[endofLine]++;
+  }
   conveyorBelt.unshift(nextPart);
 
   // Before work
-  console.log(conveyorBelt.join(" | "));
+  console.log(`${iteration}/${config.iterations}`);
+  console.log(`| ${conveyorBelt.join(" | ")} |`);
 
   // Do some work
   workerGroups.forEach((workerGroup, position) => {
@@ -78,7 +83,11 @@ for (let index = 0; index < config.iterations; index++) {
   });
 
   // After work
-  console.log(conveyorBelt.join(" | ") + "\n");
+  console.log(`| ${conveyorBelt.join(" | ")} |
+	`);
 }
 
 console.log(`Products assembled: ${productCount}`);
+for (const key in unusedParts) {
+  console.log(`Part ${key} unused: ${unusedParts[key]}`);
+}

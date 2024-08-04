@@ -4,4 +4,5 @@ exports.config = {
   buildIterations: 4,
   parts: ["A", "B"],
   hands: 2,
+  workersPerGroup: 2,
 };
