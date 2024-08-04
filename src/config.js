@@ -1,4 +1,4 @@
-exports.config = {
+export const config = {
   conveyorBeltLength: 3,
   iterations: 100,
   buildIterations: 4,
