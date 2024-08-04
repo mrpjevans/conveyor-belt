@@ -1,48 +1,18 @@
 const { config } = require("./config");
 
 const conveyorBelt = new Array(config.conveyorBeltLength).fill(" ");
-const parts = ["A", "B", " "];
+const parts = [...config.parts, " "];
 let productCount = 0;
 
-const doWork = (worker, partAvailable, otherWorkerDidWork) => {
-  // Do I have everything I need to make a product?
-  if (["A", "B"].every((value) => worker.hands.includes(value))) {
-    // ASSUMPTION: The worker can only put the product back after the final build iteration
-    if (worker.buildCounter === config.buildIterations) {
-      worker.hands = ["P"];
-    } else {
-      worker.buildCounter++;
-    }
-  }
-
-  if (!otherWorkerDidWork) {
-    // Put down the product if we have one
-    const productIndex = worker.hands.indexOf("P");
-    if (productIndex !== -1 && partAvailable === " ") {
-      worker.hands.splice(productIndex, 1);
-      return "P";
-    }
-
-    // Can we take a product?
-    if (worker.hands.length === 2 || [" ", "P"].includes(partAvailable)) {
-      return false;
-    }
-
-    if (!worker.hands.includes(partAvailable)) {
-      worker.hands.push(partAvailable);
-      return true;
-    }
-  }
-
-  // No interaction with the conveyor belt took place
-  return false;
-};
+const createWorker = () => ({
+  hands: [],
+  buildCounter: 0,
+});
 
 // Assign the workers
-const worker = { hands: new Array(), buildCounter: 0 };
-const workerPairs = new Array();
+const workerGroups = new Array();
 for (let index = 0; index < config.conveyorBeltLength; index++) {
-  workerPairs.push([worker, worker]);
+  workerGroups.push([createWorker(), createWorker()]);
 }
 
 for (let index = 0; index < config.iterations; index++) {
@@ -53,22 +23,62 @@ for (let index = 0; index < config.iterations; index++) {
   conveyorBelt.pop();
   conveyorBelt.unshift(nextPart);
 
+  // Before work
+  console.log(conveyorBelt.join(" | "));
+
   // Do some work
-  workerPairs.forEach((workerPair, position) => {
-    let workDone = false;
-    workerPair.forEach((worker) => {
-      // Will return true if a part was taken, P if a product was placed and false if unable to work
-      workDone = doWork(worker, conveyorBelt[position], workDone);
-      if (workDone === "P") {
+  workerGroups.forEach((workerGroup, position) => {
+    let groupUsedConveyorBelt = false;
+
+    // ASSUMPTION: The workers are very polite and always go in the same order
+    workerGroup.forEach((worker) => {
+      // Does the worker have everything they need to make a product?
+      if (config.parts.every((value) => worker.hands.includes(value))) {
+        // ASSUMPTION: The worker can only put the product back after the final build iteration
+        if (worker.buildCounter === config.buildIterations) {
+          worker.hands = ["P"];
+        } else {
+          worker.buildCounter++;
+        }
+      }
+
+      // If another worker has used the conveyor belt, there's nothing more to do
+      if (groupUsedConveyorBelt) {
+        return;
+      }
+
+      const partAvailable = conveyorBelt[position];
+
+      // Put down the product if we have one
+      if (worker.hands.includes("P") && partAvailable === " ") {
+        worker.hands = [];
+        worker.buildCounter = 0;
         conveyorBelt[position] = "P";
         productCount++;
-      } else if (workDone) {
+        groupUsedConveyorBelt = true;
+        return;
+      }
+
+      // Can we take a product?
+      if (
+        worker.hands.length === config.hands ||
+        !config.parts.includes(partAvailable)
+      ) {
+        return;
+      }
+
+      // Is it a needed part?
+      if (!worker.hands.includes(partAvailable)) {
+        worker.hands.push(partAvailable);
         conveyorBelt[position] = " ";
+        groupUsedConveyorBelt = true;
+        return;
       }
     });
   });
 
-  console.log(conveyorBelt.join(" | "));
+  // After work
+  console.log(conveyorBelt.join(" | ") + "\n");
 }
 
 console.log(`Products assembled: ${productCount}`);
